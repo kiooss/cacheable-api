@@ -1,12 +1,6 @@
 #!/usr/bin/env node
 
 const lib = require("../");
-const path = require("path");
-const os = require("os");
-
-const configDir = path.join(os.homedir(), "etc");
-const forecastIOApiKey = require(path.join(configDir, "forecastio.json")).token;
-
 const getWeather = lib.cacheableRequest("get-weather", lib.getJSON, 5);
 
 function icon(weather) {
@@ -48,9 +42,9 @@ function icon(weather) {
 }
 
 function temperature(weather) {
-  const tempC = Math.round(weather.temperature * 10) / 10;
-  const apparentTemperature = Math.round(weather.apparentTemperature * 10) / 10;
-  const tempF = tempC * 1.8 + 32;
+  const tempC = Math.round(weather.temp_c * 10) / 10;
+  const apparentTemperature = Math.round(weather.feelslike_c * 10) / 10;
+  const tempF = Math.round(weather.temp_f * 10) / 10;
 
   let color = 255;
   if (tempF < 40) {
@@ -83,17 +77,14 @@ function temperature(weather) {
   return `#[fg=colour${color}]${tempC}\ue339 #[fg=colour00]${face} #[fg=colour${color}]${apparentTemperature}\ue339`;
 }
 
-const latlon = {
-  lat: 31.282451,
-  lon: 120.573378
-};
-
-const apiUrl = `https://api.darksky.net/forecast/${forecastIOApiKey}/${latlon.lat},${latlon.lon}?lang=zh&units=si`;
+const key = process.env.WEATHER_API_KEY;
+const city = "suzhou";
+const apiUrl = `https://api.weatherapi.com/v1/current.json?key=${key}&q=${city}&aqi=yes`;
 
 getWeather(apiUrl)
-  .then(res => {
-    console.log(`${icon(res.currently)} ${temperature(res.currently)}`);
+  .then((res) => {
+    console.log(`${temperature(res.current)}`);
   })
-  .catch(err => {
+  .catch((err) => {
     lib.handleError("get-weather", err);
   });
